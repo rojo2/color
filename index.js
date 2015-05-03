@@ -279,67 +279,98 @@ Color.fromString = function(value, format) {
 Color.prototype = {
   constructor: Color,
 
+  min: function() {
+    return Math.min(this.r / 255, this.g / 255, this.b / 255);
+  },
+
+  max: function() {
+    return Math.max(this.r / 255, this.g / 255, this.b / 255);
+  },
+
   delta: function() {
-    return Math.max(this.r / 255, this.g / 255, this.b / 255) 
-        - Math.min(this.r / 255, this.g / 255, this.b / 255);
+    return this.max() - this.min();
   },
 
-  hue: function() {
-    return Math.atan2(
-      Math.sqrt(3) * (this.g - this.b), 
-      2 * this.r - this.g - this.b
-    );
+  hue: function(format) {
+    switch(format) {
+      default:
+      case "deg":
+      case "degs":
+      case "degrees":
+        return Color.normalizeHue(Math.atan2(
+          Math.sqrt(3) * (this.g - this.b), 
+          2 * this.r - this.g - this.b
+        ) * (180 / Math.PI));
+
+      case "rad":
+      case "rads":
+      case "radians":
+        return Math.atan2(
+          Math.sqrt(3) * (this.g - this.b), 
+          2 * this.r - this.g - this.b
+        );
+    }
   },
 
-  saturation: function() {
-    return this.delta() / (1 - Math.abs(2 * this.lightness() - 1));
+  saturation: function(format) {
+    switch(format) {
+      default:
+      case "percent":
+        return Math.round((this.delta() / (1 - Math.abs(2 * this.lightness("unit") - 1))) * 100);
+
+      case "unit":
+        return this.delta() / (1 - Math.abs(2 * this.lightness("unit") - 1));
+    }
   },
 
-  lightness: function() {
-    return this.delta() * 0.5;
+  lightness: function(format) {
+    switch(format) {
+      default:
+      case "percent":
+        return Math.round(((this.max() + this.min()) * 0.5) * 100);
+
+      case "unit":
+        return (this.max() + this.min()) * 0.5;
+    }
   },
 
   brightness: function() {
     return ((this.r / 255) + (this.g / 255) + (this.b / 255)) / 3;
   },
 
-  add: function(c) {
-    this.r += c.r;
-    this.g += c.g;
-    this.b += c.b;
-    this.a += c.a;
+  add: function(c, alpha) {
+    this.r = Color.clamp(this.r + c.r, 0, 255);
+    this.g = Color.clamp(this.g + c.g, 0, 255);
+    this.b = Color.clamp(this.b + c.b, 0, 255);
     return this;
   },
 
-  subtract: function(c) {
-    this.r -= c.r;
-    this.g -= c.g;
-    this.b -= c.b;
-    this.a -= c.a;
+  subtract: function(c, alpha) {
+    this.r = Color.clamp(this.r - c.r, 0, 255);
+    this.g = Color.clamp(this.g - c.g, 0, 255);
+    this.b = Color.clamp(this.b - c.b, 0, 255);
     return this;
   },
 
   divide: function(c) {
-    this.r /= c.r;
-    this.g /= c.g;
-    this.b /= c.b;
-    this.a /= c.a;
+    this.r = Color.clamp(this.r / c.r, 0, 255);
+    this.g = Color.clamp(this.g / c.g, 0, 255);
+    this.b = Color.clamp(this.b / c.b, 0, 255);
     return this;
   },
 
   multiply: function(c) {
-    this.r *= c.r;
-    this.g *= c.g;
-    this.b *= c.b;
-    this.a *= c.a;
+    this.r = Color.clamp(this.r * c.r, 0, 255);
+    this.g = Color.clamp(this.g * c.g, 0, 255);
+    this.b = Color.clamp(this.b * c.b, 0, 255);
     return this;
   },
 
   scaleBy: function(k) {
-    this.r *= k;
-    this.g *= k;
-    this.b *= k;
-    this.a *= k;
+    this.r = Color.clamp(this.r * k, 0, 255);
+    this.g = Color.clamp(this.g * k, 0, 255);
+    this.b = Color.clamp(this.b * k, 0, 255);
+    return this;
   },
 
   clone: function() {
@@ -355,7 +386,6 @@ Color.prototype = {
   },
 
   toArray: function(format) {
-    format = format || "rgba";
     switch(format) {
       default:
       case "rgba": return [this.r,this.g,this.b,this.a];
@@ -364,7 +394,6 @@ Color.prototype = {
   },
 
   toNumber: function(format) {
-    format = format || "rgba";
     switch(format) {
       default:
       case "rgba":
@@ -382,12 +411,13 @@ Color.prototype = {
   },
 
   toString: function(format) {
-    format = format || "css";
     switch(format) {
       default:
       case "css": return "#" + Color.toHex(this.r) + Color.toHex(this.g) + Color.toHex(this.b);
       case "rgb": return "rgb(" + this.r + "," + this.g + "," + this.b + ")";
       case "rgba": return "rgba(" + this.r + "," + this.g + "," + this.b + "," + this.a + ")";
+      case "hsl": return "hsl(" + this.hue() + "," + this.saturation() + "%," + this.lightness() + "%)";
+      case "hsla": return "hsla(" + this.hue() + "," + this.saturation() + "%," + this.lightness() + "%," + this.a + ")";
     }
   }
 };
