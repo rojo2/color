@@ -62,11 +62,47 @@ Color.fromNumber = function(value, format) {
 
 Color.fromString = function(value, format) {
   format = format || "css";
+  var r,g,b,a;
   switch(format) {
     default:
     case "css":
+      if (value.substr(0,1) === "#") {
+        
+        if (value.length === 4) {
+          r = value.substr(1,1) + value.substr(1,1);
+          g = value.substr(2,1) + value.substr(2,1);
+          b = value.substr(3,1) + value.substr(3,1);
+        } else {
+          r = value.substr(1,2);
+          g = value.substr(3,2);
+          b = value.substr(5,2);
+        }
+        
+        r = parseInt(r, 10);
+        g = parseInt(g, 10);
+        b = parseInt(b, 10);
+        a = 1;
+
+      } else {
+        // TODO: If we found the color name in the color name table
+        // then we create a color with that value.
+      }
+      break;
+
     case "rgb":
+
+      if (/rgb\(-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?\)/.test(value)) {
+
+      }
+      break;
+
     case "rgba":
+
+      if (/rgba\(-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?,-?[0-9]+(?:\.[0-9]+)?\)/.test(value)) {
+        
+      }
+      break;
+
   }
   return new Color(r,g,b,a);
 };
