@@ -1,4 +1,4 @@
-{
+module.exports = {
   "aliceblue": "#f0f8ff",
   "antiquewhite": "#faebd7",
   "aqua": "#00ffff",
@@ -146,4 +146,4 @@
   "whitesmoke": "#f5f5f5",
   "yellow": "#ffff00",
   "yellowgreen": "#9acd32"
-}
+};
