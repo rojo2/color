@@ -7,6 +7,11 @@ function Color(r,g,b,a) {
   this.a = a || 1;
 }
 
+Color.MAX_KELVIN = 40000;
+Color.MIN_KELVIN = 1000;
+Color.ONE_THIRD = 1 / 3;
+Color.TWO_THIRDS = 2 / 3;
+
 Color.interpolate = function(a,b,p,r) {
   r = r || new Color();
   r.r = a.r + ((b.r - a.r) * p);
@@ -22,22 +27,11 @@ Color.clamp = function(v,min,max) {
   return v;
 };
 
-Color.hslToRgb = function(h,s,l) {
-  var m2, m1;
-  if (l <= 0.5) {
-    m2 = l * (s + 1);
-  } else {
-    m2 = l+s-l*s;
-  }
-
-  m1 = l*2-m2
-  var r = Color.hueToRgb(m1, m2, h + 1/3);
-  var g = Color.hueToRgb(m1, m2, h);
-  var b = Color.hueToRgb(m1, m2, h - 1/3);
-  return new Color(r,g,b);
+Color.normalizeHue = function(h) {
+  return ((h % 360) + 360) % 360;
 };
 
-Color.hueToRgb = function(m1,m2,h) {
+Color.hue = function(m1,m2,h) {
   if (h < 0) {
     h += 1;
   }
@@ -55,19 +49,10 @@ Color.hueToRgb = function(m1,m2,h) {
   }
 
   if (h * 3 < 2) {
-    return m1 + (m2 - m1) * (2 / 3 - h) * 6;
+    return m1 + (m2 - m1) * (Color.TWO_THIRDS - h) * 6;
   }
 
   return m1;
-};
-
-Color.toByteHex = function(value) {
-  value = Math.round(value) & 0xFF;
-  value = value.toString(16);
-  if (value.length == 1) {
-    value = "0" + value;
-  }
-  return value;
 };
 
 Color.random = function(alpha) {
@@ -78,6 +63,42 @@ Color.random = function(alpha) {
       Math.random() * 255,
       alpha === true ? Math.random() : 1
   );
+};
+
+Color.fromHSL = function(h,s,l) {
+  h = Color.normalizeHue(h) / 360;
+  s = s / 100;
+  l = l / 100;
+
+  var m2, m1;
+  if (l <= 0.5) {
+    m2 = l * (s + 1);
+  } else {
+    m2 = l + s - l * s;
+  }
+
+  m1 = l * 2 - m2;
+  var r = Color.hue(m1, m2, h + Color.ONE_THIRD);
+  var g = Color.hue(m1, m2, h);
+  var b = Color.hue(m1, m2, h - Color.ONE_THIRD);
+  return new Color(Color.toByte(r), Color.toByte(g), Color.toByte(b));
+};
+
+Color.fromByte = function(value) {
+  return value / 255;
+};
+
+Color.toByte = function(value) {
+  return Math.round(value * 255);
+};
+
+Color.toHex = function(value) {
+  value = Math.round(value) & 0xFF;
+  value = value.toString(16);
+  if (value.length == 1) {
+    value = "0" + value;
+  }
+  return value;
 };
 
 Color.fromArray = function(value, format) {
@@ -99,9 +120,6 @@ Color.fromArray = function(value, format) {
   }
   return new Color(r,g,b,a);
 };
-
-Color.MAX_KELVIN = 40000;
-Color.MIN_KELVIN = 1000;
 
 Color.fromNumber = function(value, format) {
   format = format || "rgba";
@@ -173,6 +191,8 @@ Color.fromString = function(value, format) {
   if (format === undefined) {
     if (value.substr(0,1) === "#") {
       format = "css";
+    } else if (value.substr(0,4) === "hsl(") {
+      format = "hsl";
     } else if (value.substr(0,4) === "rgb(") {
       format = "rgb";
     } else if (value.substr(0,5) === "rgba(") {
@@ -187,7 +207,6 @@ Color.fromString = function(value, format) {
     default:
     case "css":
       if (value.substr(0,1) === "#") {
-        
         if (value.length === 4) {
           r = value.substr(1,1) + value.substr(1,1);
           g = value.substr(2,1) + value.substr(2,1);
@@ -197,18 +216,14 @@ Color.fromString = function(value, format) {
           g = value.substr(3,2);
           b = value.substr(5,2);
         }
-        
         r = parseInt(r, 10);
         g = parseInt(g, 10);
         b = parseInt(b, 10);
-
       } else {
-
         if (value in names) {
           var hex = names[value];
           return Color.fromString(hex, "css");
         }
-
       }
       break;
 
@@ -219,7 +234,21 @@ Color.fromString = function(value, format) {
         h = parseInt(matches[1], 10);
         s = parseInt(matches[2], 10);
         l = parseInt(matches[3], 10);
-        return Color.hslToRgb(h,s,l);
+        return Color.fromHSL(h,s,l);
+      }
+      break;
+
+    case "hsla":
+      var re = /^hsl\((-?[0-9]+(?:\.[0-9]+)?),(-?[0-9]+(?:\.[0-9]+)?)%,(-?[0-9]+(?:\.[0-9]+)?)%,(-?[0-9]+(?:\.[0-9]+)?)\)$/;
+      var matches = value.match(re);
+      if (matches) {
+        h = parseInt(matches[1], 10);
+        s = parseInt(matches[2], 10);
+        l = parseInt(matches[3], 10);
+        a = parseInt(matches[4], 10);
+        var color = Color.fromHSL(h,s,l);
+        color.a = a;
+        return color;
       }
       break;
 
@@ -356,7 +385,7 @@ Color.prototype = {
     format = format || "css";
     switch(format) {
       default:
-      case "css": return "#" + Color.toByteHex(this.r) + Color.toByteHex(this.g) + Color.toByteHex(this.b);
+      case "css": return "#" + Color.toHex(this.r) + Color.toHex(this.g) + Color.toHex(this.b);
       case "rgb": return "rgb(" + this.r + "," + this.g + "," + this.b + ")";
       case "rgba": return "rgba(" + this.r + "," + this.g + "," + this.b + "," + this.a + ")";
     }
