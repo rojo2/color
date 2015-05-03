@@ -109,6 +109,90 @@ describe("Color", function() {
     expect(c.r).to.be.equal(128);
     expect(c.g).to.be.equal(128);
 
+  });
+
+  it("should represent a color as a css value (#rrggbb)", function() {
+
+    var color;
+    color = new Color(255,0,0);
+    expect(color.toString("css")).to.be.equal("#ff0000");
+    
+    color = new Color(0,255,0);
+    expect(color.toString("css")).to.be.equal("#00ff00");
+    
+    color = new Color(0,0,255);
+    expect(color.toString("css")).to.be.equal("#0000ff");
+    
+    color = new Color(255,127,127);
+    expect(color.toString("css")).to.be.equal("#ff7f7f");
+
+  });
+
+  it("should represent a color as a rgb value (rgb(r,g,b))", function() {
+    
+    var color;
+    color = new Color(255,0,0);
+    expect(color.toString("rgb")).to.be.equal("rgb(255,0,0)");
+    
+    color = new Color(0,255,0);
+    expect(color.toString("rgb")).to.be.equal("rgb(0,255,0)");
+    
+    color = new Color(0,0,255);
+    expect(color.toString("rgb")).to.be.equal("rgb(0,0,255)");
+    
+    color = new Color(255,127,127);
+    expect(color.toString("rgb")).to.be.equal("rgb(255,127,127)");
+
+  });
+
+  it("should represent a color as a rgba value (rgba(r,g,b,a))", function() {
+    
+    var color;
+    color = new Color(255,0,0);
+    expect(color.toString("rgba")).to.be.equal("rgba(255,0,0,1)");
+    
+    color = new Color(0,255,0);
+    expect(color.toString("rgba")).to.be.equal("rgba(0,255,0,1)");
+    
+    color = new Color(0,0,255);
+    expect(color.toString("rgba")).to.be.equal("rgba(0,0,255,1)");
+    
+    color = new Color(255,127,127);
+    expect(color.toString("rgba")).to.be.equal("rgba(255,127,127,1)");
+
+  });
+
+  it("should represent a color as a hsla value (hsl(h,s,l))", function() {
+    
+    var color;
+    color = new Color(255,0,0);
+    expect(color.toString("hsl")).to.be.equal("hsl(0,100%,50%)");
+    
+    color = new Color(0,255,0);
+    expect(color.toString("hsl")).to.be.equal("hsl(120,100%,50%)");
+    
+    color = new Color(0,0,255);
+    expect(color.toString("hsl")).to.be.equal("hsl(240,100%,50%)");
+    
+    color = new Color(255,127,127);
+    expect(color.toString("hsl")).to.be.equal("hsl(0,100%,75%)");
+
+  });
+
+  it("should represent a color as a hsla value (hsla(h,s,l,a))", function() {
+    
+    var color;
+    color = new Color(255,0,0);
+    expect(color.toString("hsla")).to.be.equal("hsla(0,100%,50%,1)");
+    
+    color = new Color(0,255,0);
+    expect(color.toString("hsla")).to.be.equal("hsla(120,100%,50%,1)");
+    
+    color = new Color(0,0,255);
+    expect(color.toString("hsla")).to.be.equal("hsla(240,100%,50%,1)");
+    
+    color = new Color(255,127,127);
+    expect(color.toString("hsla")).to.be.equal("hsla(0,100%,75%,1)");
 
   });
 
